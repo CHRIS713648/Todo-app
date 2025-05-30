@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HarmonyTasks - Inclusive Task Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7C3AED',
+                        secondary: '#A78BFA',
+                        accent: '#F59E0B',
+                        dark: '#1F2937',
+                        light: '#F3F4F6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles */
+        .gradient-bg {
+            background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .calendar-day:hover {
+            background-color: #A78BFA;
+            color: white;
+        }
+        .selected-day {
+            background-color: #7C3AED;
+            color: white;
+        }
+        /* PWA install prompt */
+        .install-prompt {
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-tasks text-2xl"></i>
+                    <h1 class="text-2xl font-bold">HarmonyTasks</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-full hover:bg-purple-700 transition">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="userMenu" class="p-2 rounded-full hover:bg-purple-700 transition">
+                        <i class="fas fa-user-circle text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Calendar -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6 h-fit">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Calendar</h2>
+                    <div class="flex space-x-2">
+                        <button id="prevMonth" class="p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button id="nextMonth" class="p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="currentMonth" class="text-center font-medium text-lg mb-4 text-gray-700">
+                    June 2023
+                </div>
+                
+                <div class="grid grid-cols-7 gap-1 mb-2">
+                    <div class="text-center font-medium text-sm text-gray-500">Sun</div>
+                    <div class="text-center font-medium text-sm text-gray-500">Mon</div>
+                    <div class="text-center font-medium text-sm text-gray-500">Tue</div>
+                    <div class="text-center font-medium text-sm text-gray-500">Wed</div>
+                    <div class="text-center font-medium text-sm text-gray-500">Thu</div>
+                    <div class="text-center font-medium text-sm text-gray-500">Fri</div>
+                    <div class="text-center font-medium text-sm text-gray-500">Sat</div>
+                </div>
+                
+                <div id="calendarDays" class="grid grid-cols-7 gap-1">
+                    <!-- Calendar days will be populated by JavaScript -->
+                </div>
+                
+                <div class="mt-6">
+                    <h3 class="font-medium text-gray-700 mb-2">Today's Events</h3>
+                    <div id="todaysEvents" class="space-y-2">
+                        <!-- Events will be populated by JavaScript -->
+                        <div class="text-gray-500 italic">No events scheduled for today</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Middle Column - Tasks -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Add Task Form -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Task</h2>
+                    <form id="taskForm" class="space-y-4">
+                        <div>
+                            <label for="taskTitle" class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                            <input type="text" id="taskTitle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="What needs to be done?" required>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="taskDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                <input type="date" id="taskDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required>
+                            </div>
+                            <div>
+                                <label for="taskTime" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                                <input type="time" id="taskTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="taskPriority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <select id="taskPriority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="taskNotes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <textarea id="taskNotes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Additional details..."></textarea>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" id="setReminder" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                            <label for="setReminder" class="ml-2 block text-sm text-gray-700">Set reminder notification</label>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3">
+                            <button type="reset" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Clear</button>
+                            <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Add Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Tasks List -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Your Tasks</h2>
+                        <div class="flex space-x-2">
+                            <button id="filterAll" class="px-3 py-1 bg-purple-600 text-white text-sm rounded-full">All</button>
+                            <button id="filterToday" class="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-full hover:bg-gray-300">Today</button>
+                            <button id="filterUpcoming" class="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-full hover:bg-gray-300">Upcoming</button>
+                        </div>
+                    </div>
+                    
+                    <div id="tasksList" class="space-y-3">
+                        <!-- Sample task (will be populated by JavaScript) -->
+                        <div class="task-card border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-start space-x-3">
+                                    <input type="checkbox" class="mt-1 h-5 w-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <div>
+                                        <h3 class="font-medium text-gray-800">Complete project presentation</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Due: Today, 3:00 PM</p>
+                                        <p class="text-sm text-gray-600 mt-2">Need to finalize slides and practice presentation. Meeting with team at 2pm.</p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full mb-2">Medium</span>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="task-card border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-start space-x-3">
+                                    <input type="checkbox" class="mt-1 h-5 w-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <div>
+                                        <h3 class="font-medium text-gray-800">Doctor's appointment</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Due: Jun 15, 2023, 10:30 AM</p>
+                                        <p class="text-sm text-gray-600 mt-2">Annual checkup. Bring insurance card.</p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full mb-2">High</span>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">HarmonyTasks</h3>
+                    <p class="text-gray-300">An inclusive task manager for everyone, regardless of gender identity.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Features</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">Tasks</a></li>
+                        <li><a href="#" class="hover:text-white">Calendar</a></li>
+                        <li><a href="#" class="hover:text-white">Reminders</a></li>
+                        <li><a href="#" class="hover:text-white">Notes</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Support</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Download</h3>
+                    <div class="flex space-x-3">
+                        <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg">
+                            <i class="fab fa-apple"></i>
+                        </button>
+                        <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg">
+                            <i class="fab fa-google-play"></i>
+                        </button>
+                        <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg">
+                            <i class="fab fa-windows"></i>
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-4">Available on all major platforms</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 HarmonyTasks. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Install Prompt (PWA) -->
+    <div id="installPrompt" class="install-prompt fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-xl p-4 hidden">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-mobile-alt text-2xl text-purple-600 mr-3"></i>
+                <div>
+                    <h3 class="font-medium">Install HarmonyTasks</h3>
+                    <p class="text-sm text-gray-600">Get the app for a better experience</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="dismissInstall" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Not Now</button>
+                <button id="installApp" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Install</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div id="privacyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Your Privacy Matters</h2>
+                    <button id="closePrivacyModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="prose prose-sm max-w-none">
+                    <p>At HarmonyTasks, we take your privacy seriously. Here's how we protect your data:</p>
+                    <ul>
+                        <li><strong>End-to-end encryption:</strong> All your tasks and notes are encrypted before they leave your device.</li>
+                        <li><strong>Local storage first:</strong> Your data is stored on your device by default, with optional cloud sync.</li>
+                        <li><strong>No tracking:</strong> We don't track your activity or sell your data to third parties.</li>
+                        <li><strong>Gender-inclusive design:</strong> We don't ask for or store unnecessary personal information.</li>
+                        <li><strong>You're in control:</strong> Easily export or delete your data at any time.</li>
+                    </ul>
+                    <p>By using HarmonyTasks, you agree to our <a href="#" class="text-purple-600">Privacy Policy</a> and <a href="#" class="text-purple-600">Terms of Service</a>.</p>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button id="acceptPrivacy" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const calendarDays = document.getElementById('calendarDays');
+        const currentMonth = document.getElementById('currentMonth');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const taskForm = document.getElementById('taskForm');
+        const tasksList = document.getElementById('tasksList');
+        const todaysEvents = document.getElementById('todaysEvents');
+        const installPrompt = document.getElementById('installPrompt');
+        const installAppBtn = document.getElementById('installApp');
+        const dismissInstallBtn = document.getElementById('dismissInstall');
+        const privacyModal = document.getElementById('privacyModal');
+        const closePrivacyModal = document.getElementById('closePrivacyModal');
+        const acceptPrivacy = document.getElementById('acceptPrivacy');
+        // Current date
+        let currentDate = new Date();
+        let currentYear = currentDate.getFullYear();
+        let currentMonthIndex = currentDate.getMonth();
+        // Theme toggle
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark' || 
+            (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('theme'))) {
+            document.documentElement.classList.add('dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        // Calendar functions
+        function renderCalendar() {
+            calendarDays.innerHTML = '';
+            
+            const firstDayOfMonth = new Date(currentYear, currentMonthIndex, 1);
+            const daysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
+            const startingDay = firstDayOfMonth.getDay();
+            
+            currentMonth.textContent = new Date(currentYear, currentMonthIndex).toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            
+            // Previous month's days
+            const prevMonthDays = new Date(currentYear, currentMonthIndex, 0).getDate();
+            for (let i = 0; i < startingDay; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'text-center p-2 text-gray-400';
+                dayElement.textContent = prevMonthDays - startingDay + i + 1;
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Current month's days
+            const today = new Date();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'text-center p-2 rounded-full calendar-day cursor-pointer';
+                
+                // Highlight today
+                if (i === today.getDate() && currentMonthIndex === today.getMonth() && currentYear === today.getFullYear()) {
+                    dayElement.classList.add('bg-purple-100', 'font-medium');
+                }
+                
+                dayElement.textContent = i;
+                
+                // Highlight selected day
+                dayElement.addEventListener('click', () => {
+                    document.querySelectorAll('.calendar-day').forEach(day => {
+                        day.classList.remove('selected-day');
+                    });
+                    dayElement.classList.add('selected-day');
+                    
+                    // Filter tasks for selected day
+                    filterTasksByDate(new Date(currentYear, currentMonthIndex, i));
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Next month's days
+            const daysToAdd = 42 - (startingDay + daysInMonth);
+            for (let i = 1; i <= daysToAdd; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'text-center p-2 text-gray-400';
+                dayElement.textContent = i;
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Update today's events
+            updateTodaysEvents();
+        }
+        function updateTodaysEvents() {
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            // In a real app, you would fetch events for today from your data store
+            const sampleEvents = [
+                { time: '10:00 AM', title: 'Team Meeting' },
+                { time: '3:30 PM', title: 'Dentist Appointment' }
+            ];
+            
+            todaysEvents.innerHTML = '';
+            
+            if (sampleEvents.length === 0) {
+                todaysEvents.innerHTML = '<div class="text-gray-500 italic">No events scheduled for today</div>';
+                return;
+            }
+            
+            sampleEvents.forEach(event => {
+                const eventElement = document.createElement('div');
+                eventElement.className = 'flex items-start p-2 bg-gray-50 rounded-lg';
+                eventElement.innerHTML = `
+                    <div class="w-16 text-sm font-medium text-purple-600">${event.time}</div>
+                    <div class="flex-1">
+                        <div class="font-medium">${event.title}</div>
+                        <div class="text-xs text-gray-500">Location/Details</div>
+                    </div>
+                `;
+                todaysEvents.appendChild(eventElement);
+            });
+        }
+        function filterTasksByDate(date) {
+            // In a real app, you would filter tasks from your data store
+            console.log(`Filtering tasks for ${date.toLocaleDateString()}`);
+        }
+        // Month navigation
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonthIndex--;
+            if (currentMonthIndex < 0) {
+                currentMonthIndex = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        });
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonthIndex++;
+            if (currentMonthIndex > 11) {
+                currentMonthIndex = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        });
+        // Task form submission
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('taskTitle').value;
+            const date = document.getElementById('taskDate').value;
+            const time = document.getElementById('taskTime').value;
+            const priority = document.getElementById('taskPriority').value;
+            const notes = document.getElementById('taskNotes').value;
+            const hasReminder = document.getElementById('setReminder').checked;
+            
+            // Create new task element
+            const taskElement = document.createElement('div');
+            taskElement.className = 'task-card border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer';
+            
+            // Priority badge color
+            let priorityClass = '';
+            let priorityText = '';
+            switch (priority) {
+                case 'low':
+                    priorityClass = 'bg-green-100 text-green-800';
+                    priorityText = 'Low';
+                    break;
+                case 'medium':
+                    priorityClass = 'bg-yellow-100 text-yellow-800';
+                    priorityText = 'Medium';
+                    break;
+                case 'high':
+                    priorityClass = 'bg-red-100 text-red-800';
+                    priorityText = 'High';
+                    break;
+            }
+            
+            // Format date
+            const taskDate = new Date(date);
+            const formattedDate = taskDate.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            taskElement.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex items-start space-x-3">
+                        <input type="checkbox" class="mt-1 h-5 w-5 text-purple-600 rounded focus:ring-purple-500">
+                        <div>
+                            <h3 class="font-medium text-gray-800">${title}</h3>
+                            <p class="text-sm text-gray-500 mt-1">Due: ${formattedDate}${time ? ', ' + time : ''}</p>
+                            ${notes ? `<p class="text-sm text-gray-600 mt-2">${notes}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="px-2 py-1 ${priorityClass} text-xs rounded-full mb-2">${priorityText}</span>
+                        <button class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add to top of tasks list
+            tasksList.insertBefore(taskElement, tasksList.firstChild);
+            
+            // Reset form
+            taskForm.reset();
+            
+            // Show success message
+            showNotification('Task added successfully!');
+            
+            // Set reminder if enabled
+            if (hasReminder && time) {
+                // In a real app, you would schedule a notification
+                console.log(`Reminder set for ${date} at ${time}`);
+            }
+        });
+        // Filter buttons
+        document.getElementById('filterAll').addEventListener('click', () => {
+            // Filter all tasks
+            console.log('Showing all tasks');
+        });
+        document.getElementById('filterToday').addEventListener('click', () => {
+            // Filter today's tasks
+            console.log('Showing today\'s tasks');
+        });
+        document.getElementById('filterUpcoming').addEventListener('click', () => {
+            // Filter upcoming tasks
+            console.log('Showing upcoming tasks');
+        });
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center';
+            notification.innerHTML = `
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        // PWA Installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install prompt
+            installPrompt.classList.remove('hidden');
+        });
+        installAppBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                // Hide the install prompt
+                installPrompt.classList.add('hidden');
+                // We've used the prompt, and can't use it again, throw it away
+                deferredPrompt = null;
+            }
+        });
+        dismissInstallBtn.addEventListener('click', () => {
+            installPrompt.classList.add('hidden');
+        });
+        // Privacy modal
+        function showPrivacyModal() {
+            if (!localStorage.getItem('privacyAccepted')) {
+                privacyModal.classList.remove('hidden');
+            }
+        }
+        closePrivacyModal.addEventListener('click', () => {
+            privacyModal.classList.add('hidden');
+        });
+        acceptPrivacy.addEventListener('click', () => {
+            localStorage.setItem('privacyAccepted', 'true');
+            privacyModal.classList.add('hidden');
+        });
+        // Initialize
+        renderCalendar();
+        showPrivacyModal();
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+        // Data protection - encrypt/decrypt functions would go here
+        function encryptData(data) {
+            // In a real app, you would use Web Crypto API or similar
+            return data; // Placeholder
+        }
+        function decryptData(data) {
+            // In a real app, you would decrypt the data
+            return data; // Placeholder
+        }
+    </script>
+
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#7C3AED">
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=chriscodess/todo-app" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
